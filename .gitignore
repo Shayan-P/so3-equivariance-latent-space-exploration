@@ -2,3 +2,5 @@
 .vscode/**
 __pycharm__/**
 __pycache__/**
+checkpoints/**
+.ipynb_checkpoints/**
