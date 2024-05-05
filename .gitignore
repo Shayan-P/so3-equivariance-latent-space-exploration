@@ -1,3 +1,4 @@
 .idea/**
 .vscode/**
 __pycharm__/**
+__pycache__/**
