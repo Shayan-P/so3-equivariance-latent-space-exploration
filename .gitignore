@@ -4,3 +4,5 @@ __pycharm__/**
 __pycache__/**
 checkpoints/**
 .ipynb_checkpoints/**
+
+*.obj
