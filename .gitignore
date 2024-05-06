@@ -6,3 +6,4 @@ checkpoints/**
 .ipynb_checkpoints/**
 
 *.obj
+*.pt
