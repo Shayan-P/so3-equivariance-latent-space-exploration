@@ -20,7 +20,6 @@ def get_checkpoints_dir():
     return dir
 
 
-
 class CustomLRScheduler:
     def __init__(self, optimizer, my_rl):
         self.optimizer = optimizer
@@ -29,7 +28,7 @@ class CustomLRScheduler:
 
     def set_rl(self, my_rl):
         self.my_rl = my_rl
-        
+
     def step(self):
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = self.my_rl
