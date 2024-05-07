@@ -78,6 +78,7 @@ class WeightedGridLoss(nn.Module):
         target_s2grid = self.m(target)
         # return torch.nn.functional.mse_loss(input_s2grid, target_s2grid, reduction="sum")
 
+
         # Sum over all the grid points, mean over the batch
         # loss = torch.nn.functional.l1_loss(input_s2grid, target_s2grid, reduction="none")  # B x 1 x beta x alpha
 
