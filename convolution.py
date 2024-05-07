@@ -24,7 +24,7 @@ def s2_near_identity_grid(max_beta: float = math.pi / 8, n_alpha: int = 8, n_bet
 
 
 def so3_near_identity_grid(
-        max_beta: float = math.pi / 8, max_gamma: float = 2 * math.pi, n_alpha: int = 8, n_beta: int = 3, n_gamma=None
+    max_beta: float = math.pi / 8, max_gamma: float = 2 * math.pi, n_alpha: int = 8, n_beta: int = 3, n_gamma=None
 ) -> torch.Tensor:
     """
     :return: rings of rotations around the identity, all points (rotations) in
@@ -53,8 +53,7 @@ def so3_irreps(lmax: int) -> o3.Irreps:
 
 
 def flat_wigner(lmax: int, alpha: torch.Tensor, beta: torch.Tensor, gamma: torch.Tensor) -> torch.Tensor:
-    return torch.cat([(2 * l + 1) ** 0.5 * o3.wigner_D(l, alpha, beta, gamma).flatten(-2) for l in range(lmax + 1)],
-                     dim=-1)
+    return torch.cat([(2 * l + 1) ** 0.5 * o3.wigner_D(l, alpha, beta, gamma).flatten(-2) for l in range(lmax + 1)], dim=-1)
 
 
 class S2Convolution(torch.nn.Module):
@@ -72,7 +71,6 @@ class S2Convolution(torch.nn.Module):
         psi = torch.einsum("ni,xyn->xyi", self.Y, self.w) / self.Y.shape[0] ** 0.5
         return self.lin(x, weight=psi)
 
-
 class SO3Convolution(torch.nn.Module):
     def __init__(self, f_in, f_out, lmax, kernel_grid) -> None:
         super().__init__()
@@ -85,7 +83,6 @@ class SO3Convolution(torch.nn.Module):
     def forward(self, x):
         psi = torch.einsum("ni,xyn->xyi", self.D, self.w) / self.D.shape[0] ** 0.5
         return self.lin(x, weight=psi)
-
 
 class SO3ConvolutionToS2(torch.nn.Module):
     def __init__(self, f_in, f_out, lmax, kernel_grid) -> None:
@@ -100,9 +97,8 @@ class SO3ConvolutionToS2(torch.nn.Module):
         # psi = torch.einsum("ni,xyn->xyi", self.D, self.w) / self.D.shape[0] ** 0.5
         return self.lin(x)
 
+
     # def __init__(self, lmax):
-
-
 class S2ConvNet_Autoencoder(torch.nn.Module):
     def __init__(self, lmax) -> None:
         super().__init__()
@@ -111,44 +107,43 @@ class S2ConvNet_Autoencoder(torch.nn.Module):
         grid_so3 = so3_near_identity_grid()
 
         self.l_list = [lmax, 3, 2, 1]
-        f_list = [1, 4, 8, 16, 16]
+        f_list = [1, 4, 8, 16, 32]
 
-        self.model_sphten_repr = e3nn.io.SphericalTensor(lmax, p_arg=1, p_val=1)
-        self.model_latent_repr = f_list[-1] * so3_irreps(self.l_list[-1])
+        self.latent_repr = f_list[-1] * so3_irreps(self.l_list[-1])
+        self.model_sphten_repr = e3nn.io.SphericalTensor(lmax=lmax, p_val=1, p_arg=1)
 
         # We start out on S2 and go to SO3
         encoder_list = []
-        encoder_list.append(
-            e3nn.o3.Linear(s2_irreps(self.l_list[0]), so3_irreps(self.l_list[0]), f_in=f_list[0], f_out=f_list[1],
-                           internal_weights=True))
+        encoder_list.append(e3nn.o3.Linear(s2_irreps(self.l_list[0]), so3_irreps(self.l_list[0]), f_in=f_list[0], f_out=f_list[1], internal_weights=True))
         encoder_list.append(SO3Activation(self.l_list[0], self.l_list[0], torch.relu, 11))
         encoder_list.append(e3nn.nn.BatchNorm(so3_irreps(self.l_list[0])))
         for i in range(len(self.l_list) - 1):
-            encoder_list.append(
-                e3nn.o3.Linear(so3_irreps(self.l_list[i]), so3_irreps(self.l_list[i]), f_in=f_list[i + 1],
-                               f_out=f_list[i + 2], internal_weights=True))
+            encoder_list.append(e3nn.o3.Linear(so3_irreps(self.l_list[i]), so3_irreps(self.l_list[i]), f_in=f_list[i+1], f_out=f_list[i+2], internal_weights=True))
             encoder_list.append(e3nn.nn.BatchNorm(so3_irreps(self.l_list[i])))
-            encoder_list.append(SO3Activation(self.l_list[i], self.l_list[i + 1], torch.relu, 11))
-            # encoder_list.append(e3nn.nn.S2Activation(s2_irreps(self.l_list[i]), torch.relu, 10, lmax_out=self.l_list[i+1]))
-
-            # s2_irreps(self.l_list[i+1]), torch.relu, 1))
-            # encoder_list.append(e3nn.nn.SO3Activation(s2_irreps(self.l_list[i]), s2_irreps(self.l_list[i+1]), torch.relu, 1))
+            encoder_list.append(SO3Activation(self.l_list[i], self.l_list[i+1], torch.relu, 11))
         self.encoder = nn.Sequential(*encoder_list)
 
         decoder_list = []
         for i in range(len(self.l_list) - 1, 0, -1):
-            decoder_list.append(
-                e3nn.o3.Linear(so3_irreps(self.l_list[i]), so3_irreps(self.l_list[i]), f_in=f_list[i + 1],
-                               f_out=f_list[i - 1 + 1], internal_weights=True))
+            decoder_list.append(e3nn.o3.Linear(so3_irreps(self.l_list[i]), so3_irreps(self.l_list[i]), f_in=f_list[i+1], f_out=f_list[i-1+1], internal_weights=True))
             # decoder_list.append(e3nn.nn.S2Activation(s2_irreps(self.l_list[i]), torch.relu, 10, lmax_out=self.l_list[i-1]))
             decoder_list.append(e3nn.nn.BatchNorm(so3_irreps(self.l_list[i])))
-            decoder_list.append(SO3Activation(self.l_list[i], self.l_list[i - 1], torch.relu, 11))
+            decoder_list.append(SO3Activation(self.l_list[i], self.l_list[i-1], torch.relu, 11))
 
-        decoder_list.append(
-            e3nn.o3.Linear(so3_irreps(self.l_list[0]), s2_irreps(self.l_list[0]), f_in=f_list[1], f_out=f_list[0],
-                           internal_weights=True))
+        decoder_list.append(e3nn.o3.Linear(so3_irreps(self.l_list[0]), s2_irreps(self.l_list[0]), f_in=f_list[1], f_out=f_list[0], internal_weights=True))
 
         self.decoder = nn.Sequential(*decoder_list)
+
+
+
+
+
+
+
+
+
+
+
 
         # S2Convolution(1, f_list[0], self.l_list[0], grid_s2)
 
@@ -164,6 +159,7 @@ class S2ConvNet_Autoencoder(torch.nn.Module):
         #     encoder_list.append(SO3Activation(self.l_list[i], self.l_list[i+1], torch.relu, 1))
         # self.encoder = nn.Sequential(conv_in, *encoder_list)
 
+
         # decoder_list = []
         # for i in range(len(self.l_list) - 1, 0, -1):
         #     decoder_list.append(SO3Convolution(f_list[i], f_list[i-1], self.l_list[i], grid_so3))
@@ -171,6 +167,7 @@ class S2ConvNet_Autoencoder(torch.nn.Module):
 
         # # self.decoder = nn.Sequential(*decoder_list)
         # self.decoder = nn.Sequential(*decoder_list, conv_out)
+
 
         # self.lin1 = e3nn.o3.Linear(s2_irreps(self.l_list[0]), s2_irreps(self.l_list[0]), f_in=f_list[0],f_out=f_list[1], internal_weights=True)
 
@@ -227,5 +224,4 @@ class S2ConvNet_Autoencoder(torch.nn.Module):
         # x = self.act2(x)  # [batch, features, scalar]
         # x = x.flatten(1) @ self.w_out / self.w_out.shape[0]
 
-        lat = lat.rehspae((lat.shape[0], -1)) # flatten
         return x, lat, out

@@ -15,13 +15,11 @@ class WeightedLoss(nn.Module):
         for l in range(self.lmax):
             end_idx = start_idx + 2 * l + 1
             weight = 1 / torch.mean(target[..., start_idx:end_idx])
-            l_loss = torch.nn.functional.mse_loss(input[..., start_idx:end_idx],
-                                                  target[..., start_idx:end_idx]) * weight
+            l_loss = torch.nn.functional.mse_loss(input[..., start_idx:end_idx], target[..., start_idx:end_idx]) * weight
             loss += l_loss
             # torch.exp(torch.tensor(-l))
             start_idx = end_idx
         return loss
-
 
 class LogLoss(nn.Module):
     def __init__(self, lmax):
@@ -40,7 +38,6 @@ class LogLoss(nn.Module):
         #     start_idx = end_idx
         # return loss
 
-
 class GridLoss(nn.Module):
     def __init__(self, lmax, res=100):
         super(GridLoss, self).__init__()
@@ -55,6 +52,7 @@ class GridLoss(nn.Module):
         target_s2grid = self.m(target)
         # return torch.nn.functional.mse_loss(input_s2grid, target_s2grid, reduction="sum")
 
+
         # Sum over all the grid points, mean over the batch
         # loss = torch.nn.functional.l1_loss(input_s2grid, target_s2grid, reduction="none")  # B x 1 x beta x alpha
         loss = torch.nn.functional.mse_loss(input_s2grid, target_s2grid, reduction="none")  # B x 1 x beta x alpha
@@ -62,7 +60,6 @@ class GridLoss(nn.Module):
         loss = torch.sum(loss, dim=(1, 2, 3))  # B
         loss = torch.mean(loss)
         return loss
-
 
 class WeightedGridLoss(nn.Module):
     def __init__(self, lmax, res=100):
@@ -108,15 +105,19 @@ class WeightedGridLossWithRotation(nn.Module):
         self.irreps = e3nn.o3.Irreps.spherical_harmonics(lmax, 1)
 
     def forward(self, input, target):
+
         random_axis = torch.randn((3,))
         random_axis /= torch.linalg.norm(random_axis)
         random_angle = torch.rand((1,)) * 2 * math.pi
+
+
 
         rotation_matrix = self.irreps.D_from_axis_angle(random_axis, random_angle[0]).to(input.device)
 
         input_s2grid = self.m(torch.einsum("ij, ...j->...i", rotation_matrix, input))
         target_s2grid = self.m(torch.einsum("ij, ...j->...i", rotation_matrix, target))
         # return torch.nn.functional.mse_loss(input_s2grid, target_s2grid, reduction="sum")
+
 
         # Sum over all the grid points, mean over the batch
         # loss = torch.nn.functional.l1_loss(input_s2grid, target_s2grid, reduction="none")  # B x 1 x beta x alpha
@@ -128,7 +129,7 @@ class WeightedGridLossWithRotation(nn.Module):
 
         # loss = torch.nn.functional.mse_loss(input_s2grid, target_s2grid, reduction="none")  # B x 1 x beta x alpha
         loss = torch.nn.functional.l1_loss(input_s2grid, target_s2grid, reduction="none")  # B x 1 x beta x alpha
-        weight = target_s2grid ** 2
+        weight = target_s2grid**2
         loss *= weight
         loss = torch.sum(loss, dim=(1, 2, 3))  # B
         loss = torch.mean(loss)
@@ -150,6 +151,7 @@ class WeightedPointLoss(nn.Module):
         self.scale = 10
 
     def forward(self, input, target):
+
         random_vector = torch.randn((self.n_points, 3), device=input.device)
         random_vector /= torch.linalg.norm(random_vector, dim=1, keepdim=True)
         # print(random_vector.shape)
@@ -157,9 +159,11 @@ class WeightedPointLoss(nn.Module):
         input_points = self.sphTen.signal_xyz(input, random_vector)
         target_points = self.sphTen.signal_xyz(target, random_vector)
 
-        difference = input_points - target_points
-        loss = torch.where(difference > 0, difference, -self.scale * difference)
+        # difference = input_points - target_points
+        # loss = torch.where(difference > 0, difference, -self.scale * difference)
+        loss = torch.nn.functional.huber_loss(input_points, target_points, reduction="none")
         loss /= target_points
+
 
         # loss = torch.nn.functional.l1_loss(input_points, target_points, reduction="none")  # B x 1 x n_points
         # # print("Loss shape: ", loss.shape)
@@ -172,6 +176,7 @@ class WeightedPointLoss(nn.Module):
 
         # loss = loss.reshape(-1, self.n_points)
         # return torch.mean(loss)
+
 
         # loss = torch.sum(loss, dim=(1,)) / self.n_points # B
 

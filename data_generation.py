@@ -140,7 +140,6 @@ class SimpleShapeGridDataset(Dataset):
 
         return data
 
-
 def generate_data(n_samples, res_beta=100, res_alpha=51, lmax=11):
     min_size = 0.5
     max_size = 2
