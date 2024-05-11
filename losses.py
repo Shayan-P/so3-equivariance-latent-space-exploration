@@ -186,3 +186,38 @@ class WeightedPointLoss(nn.Module):
         # print(loss.shape)
         loss = torch.mean(loss)
         return loss
+
+
+class ReconstructionLoss(nn.Module):
+    def __init__(self, lmax, n_points=1):
+        super(WeightedPointLoss, self).__init__()
+
+        normalization = "integral"
+
+        self.irreps = e3nn.o3.Irreps.spherical_harmonics(lmax, 1)
+        self.sphTen = e3nn.io.SphericalTensor(lmax, 1, 1)
+        self.n_points = n_points
+        self.topk = topk
+        self.scale = 10
+
+    def forward(self, input, target):
+
+        random_vector = torch.randn((self.n_points, 3), device=input.device)
+        random_vector /= torch.linalg.norm(random_vector, dim=1, keepdim=True)
+        # print(random_vector.shape)
+
+        input_points = self.sphTen.signal_xyz(input, random_vector)
+        target_points = self.sphTen.signal_xyz(target, random_vector)
+
+        # difference = input_points - target_points
+        # loss = torch.where(difference > 0, difference, -self.scale * difference)
+        
+        b = input.shape[0]
+        assert input_points.shape == (b,)
+
+        input_points = input_points.abs()
+        target_points = target_points.abs()
+        mx = torch.max(input_points, target_points)
+        mn = torch.min(input_points, target_points)
+        # are all the evaluated points positive?
+        return mx.sum() - mn.sum()

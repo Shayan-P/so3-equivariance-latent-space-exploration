@@ -100,14 +100,21 @@ class SO3ConvolutionToS2(torch.nn.Module):
 
     # def __init__(self, lmax):
 class S2ConvNet_Autoencoder(torch.nn.Module):
-    def __init__(self, lmax) -> None:
+    def __init__(self, lmax, l_list, channels) -> None:
+        #         self.l_list = [lmax, 3, 3, 3, 2, 2, 1]
+        # f_list = [1] + [4,   8, 8, 8, 16, 16, 32]
+
         super().__init__()
 
         grid_s2 = s2_near_identity_grid()
         grid_so3 = so3_near_identity_grid()
 
-        self.l_list = [lmax, 3, 2, 1]
-        f_list = [1, 4, 8, 16, 32]
+        assert(all(l <= lmax for l in l_list))
+        
+        self.l_list = l_list
+        f_list = [1] + channels
+
+        assert len(f_list) == len(self.l_list) + 1
 
         self.latent_repr = f_list[-1] * so3_irreps(self.l_list[-1])
         self.model_sphten_repr = e3nn.io.SphericalTensor(lmax=lmax, p_val=1, p_arg=1)
