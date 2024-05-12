@@ -1,4 +1,5 @@
 import os
+
 import torch
 
 
@@ -23,12 +24,15 @@ def get_checkpoints_dir():
 def save_data(data, name):
     torch.save(data, get_data_path(name))
 
+
 def load_data(name):
     return torch.load(get_data_path(name))
+
 
 def get_data_path(name):
     data_path = f"{get_data_dir()}/data_{name}.pt"
     return data_path
+
 
 def get_data_dir():
     dir = os.path.join(os.path.dirname(__file__), "data")

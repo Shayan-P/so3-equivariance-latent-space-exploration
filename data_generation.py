@@ -1,20 +1,22 @@
 import os
-import matplotlib.pyplot as plt
-from e3nn import o3, io, nn
+
+import e3nn
 import numpy as np
 import torch
-import e3nn
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-import plotly
-import plotly.graph_objects as go
 import trimesh
-from plotly.subplots import make_subplots
-from functools import partial, reduce
-from utils import save_data, load_data, get_data_path
-
+from torch.utils.data import Dataset
 from tqdm.notebook import tqdm
+
+from utils import get_data_path, load_data, save_data
+
+# from plotly.subplots import make_subplots
+# from functools import partial, reduce
+# import plotly
+# import plotly.graph_objects as go
+# import torch.nn as nn
+# import torch.nn.functional as F
+# import matplotlib.pyplot as plt
+# from e3nn import o3, io, nn
 
 
 def mesh_to_sphTen_by_grid(
@@ -135,7 +137,7 @@ class BoxesDataset(Dataset):
             n_samples (int, optional): Number of boxes in dataset. Defaults to 2.
         """
 
-        data_fname = f"boxes_n{n_samples}_beta{res_beta}_alpha{res_alpha}_l{lmax}.pt"
+        data_fname = f"boxes_n{n_samples}_beta{res_beta}_alpha{res_alpha}_l{lmax}"
         if os.path.exists(get_data_path(data_fname)):
             self.data = load_data(data_fname)
         else:

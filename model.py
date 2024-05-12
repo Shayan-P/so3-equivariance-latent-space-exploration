@@ -97,17 +97,20 @@ class SO3ConvolutionToS2(torch.nn.Module):
         # psi = torch.einsum("ni,xyn->xyi", self.D, self.w) / self.D.shape[0] ** 0.5
         return self.lin(x)
 
-
-    # def __init__(self, lmax):
 class S2ConvNet_Autoencoder(torch.nn.Module):
-    def __init__(self, lmax, l_list, channels) -> None:
+    def __init__(self, lmax: int, l_list: int, channels: int) -> None:
+        """
+        Create SO3 Equivariant Autoencoder
+
+        Args:
+            lmax (int):  Max degree of input tensor
+            l_list (int):  degrees of data through network.  Must begin with lmax and end with latent l
+            channels (int): Channels at each layer of the network
+        """
         #         self.l_list = [lmax, 3, 3, 3, 2, 2, 1]
         # f_list = [1] + [4,   8, 8, 8, 16, 16, 32]
 
         super().__init__()
-
-        grid_s2 = s2_near_identity_grid()
-        grid_so3 = so3_near_identity_grid()
 
         assert(all(l <= lmax for l in l_list))
 
@@ -142,93 +145,7 @@ class S2ConvNet_Autoencoder(torch.nn.Module):
         self.decoder = nn.Sequential(*decoder_list)
 
 
-
-
-
-
-
-
-
-
-
-
-        # S2Convolution(1, f_list[0], self.l_list[0], grid_s2)
-
-        # conv_out = SO3ConvolutionToS2(f_list[0], 1, self.l_list[0], grid_so3)
-
-        # encoder_list = []
-        # for i in range(len(self.l_list) - 1):
-        #     # encoder_list.append(e3nn.o3.Linear(s2_irreps(self.l_list[i]), s2_irreps(self.l_list[i]), f_list[i], f_list[i+1], internal_weights=True))
-        #     # encoder_list.append(S2Activation(s2_irreps(self.l_list[i]), s2_irreps(self.l_list[i+1]), torch.relu, 1)
-
-        #     # #     s2_irreps(self.l_list[i]), f_list[i]))
-        #     encoder_list.append(SO3Convolution(f_list[i], f_list[i+1], self.l_list[i], grid_so3))
-        #     encoder_list.append(SO3Activation(self.l_list[i], self.l_list[i+1], torch.relu, 1))
-        # self.encoder = nn.Sequential(conv_in, *encoder_list)
-
-
-        # decoder_list = []
-        # for i in range(len(self.l_list) - 1, 0, -1):
-        #     decoder_list.append(SO3Convolution(f_list[i], f_list[i-1], self.l_list[i], grid_so3))
-        #     decoder_list.append(SO3Activation(self.l_list[i], self.l_list[i-1], torch.relu, 1))
-
-        # # self.decoder = nn.Sequential(*decoder_list)
-        # self.decoder = nn.Sequential(*decoder_list, conv_out)
-
-
-        # self.lin1 = e3nn.o3.Linear(s2_irreps(self.l_list[0]), s2_irreps(self.l_list[0]), f_in=f_list[0],f_out=f_list[1], internal_weights=True)
-
-        # # # TODO Add conv out
-
-        # # f1 = 20
-        # # f2 = 40
-        # # f_output = 10
-
-        # # b_in = 60
-        # # lmax1 = 4
-
-        # b_l1 = 10
-        # lmax2 = 5
-
-        # b_l2 = 6
-
-        # self.conv1 = S2Convolution(1, f1, lmax1, kernel_grid=grid_s2)
-        # # self.conv1 = SO3Convolution(1, f1, lmax1, kernel_grid=grid_so3)
-
-        # self.act1 = SO3Activation(lmax1, lmax1, torch.relu, b_l1)
-
-        # self.conv2 = SO3Convolution(f1, f2, lmax1, kernel_grid=grid_so3)
-
-        # # self.act2 = SO3Activation(lmax2, 0, torch.relu, b_l2)
-
-        # # self.w_out = torch.nn.Parameter(torch.randn(f2, f_output))
-
     def forward(self, x):
         lat = self.encoder(x)
         out = self.decoder(lat)
-        return x, lat, out
-        return self.lin1(x)
-        x = self.conv1(x)
-        x = self.act1(x)
-        x = self.conv2(x)
-        return x
-
-        # x = self.conv1(x)
-        # print("x after conv1: ", x.shape)
-        # x = self.act1(x)
-        # print("x after act: ", x.shape)
-        # x = self.conv2(x)
-        # print("x after conv2: ", x.shape)
-
-        lat = self.encoder(x)
-        out = self.decoder(lat)
-
-        # x = x.transpose(-1, -2)  # [batch, features, alpha, beta] -> [batch, features, beta, alpha]
-        # x = self.from_s2(x)  # [batch, features, beta, alpha] -> [batch, features, irreps]
-        # x = self.conv1(x)  # [batch, features, irreps] -> [batch, features, irreps]
-        # x = self.act1(x)  # [batch, features, irreps] -> [batch, features, irreps]
-        # x = self.conv2(x)  # [batch, features, irreps] -> [batch, features, irreps]
-        # x = self.act2(x)  # [batch, features, scalar]
-        # x = x.flatten(1) @ self.w_out / self.w_out.shape[0]
-
         return x, lat, out
