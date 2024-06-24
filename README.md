@@ -8,3 +8,10 @@ Leveraging the spherical harmonic datatype, we present a novel, SO(3) equivarian
 overview: [https://www.youtube.com/watch?v=BuKRtS3pf70](https://www.youtube.com/watch?v=BuKRtS3pf70)
 
 Run `so3_equivariant_autoencoder.ipynb` notebook to reproduce the results of the [paper](./final_report.pdf).
+
+
+<object data="./poster.pdf" type="application/pdf" width="700px" height="700px">
+    <embed src="./poster.pdf">
+        <p><a href="./poster">Poster</a>.</p>
+    </embed>
+</object>
