@@ -9,4 +9,4 @@ overview: [https://www.youtube.com/watch?v=BuKRtS3pf70](https://www.youtube.com/
 
 Run `so3_equivariant_autoencoder.ipynb` notebook to reproduce the results of the [paper](./final_report.pdf).
 
-[poster](./poster.pdf)
+![poster](./poster.pdf)
